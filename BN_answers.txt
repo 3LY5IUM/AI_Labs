@@ -1,0 +1,49 @@
+AI Laboratory: Bayesian Networks and Autoregressive Language Models
+Answers to Questions 1-14 and Final Reflection
+Question 1:
+This decomposition is useful for generating text because it turns text generation into a step-by-step prediction task. It uses the chain rule to break down the massive, complex probability of an entire sentence into a sequence of smaller, manageable conditional probabilities. It allows a model to build a sentence incrementally by predicting the next word based on the specific sequence of words that came before it.
+Question 2:
+The network assumes that a word X_t is conditionally independent of all earlier words given just the previous word X_{t-1}.
+Expressed in probability notation: P(X_t\vert{}X_1, ..., X_{t-1}) = P(X_t\vert{}X_{t-1})
+Question 3:
+Conditional probability distribution P(next word | current word) based on the training data:
+ the (appears 12 times): cat (3/12 = 0.25), dog (3/12 = 0.25), mat (2/12 = ~0.17), rug (2/12 = ~0.17), park (2/12 = ~0.17)
+ cat (appears 3 times): sat (2/3 = ~0.67), ran (1/3 = ~0.33)
+ dog (appears 3 times): sat (2/3 = ~0.67), ran (1/3 = ~0.33)
+ sat (appears 4 times): on (4/4 = 1.0)
+ ran (appears 2 times): to (2/2 = 1.0)
+Zero-probability transitions: Any word combination not seen in the text has a probability of 0. Examples include P(dog|cat) = 0, P(sat|ran) = 0, and P(the|the) = 0.
+Question 4:
+In the LLM-generated Python program, the transition counts are stored in a nested dictionary (or a ⁠defaultdict⁠). For example, ⁠counts[current_word][next_word] = number_of_times_seen⁠.
+Question 5:
+The probability P(X_t\vert{}X_{t-1}) is computed by looping through the stored counts dictionary. The code calculates the total sum of all transitions from a given current_word, and then divides each individual next_word count by that total. This is usually stored in a new 'probabilities' dictionary.
+Question 6:
+The program chooses the next word by sampling from the probability distribution (Option 2).
+Difference: Choosing the most probable word (Greedy) is deterministic; it always picks the word with the highest mathematical odds, leading to the exact same sentence every time. Sampling from the distribution treats the probabilities as weights (like a weighted roulette wheel). If a word has a 25% chance, it gets picked roughly 1 out of 4 times, allowing for varied sentence generation.
+Question 7:
+If the program encounters a word for which no transition has been observed (a zero-frequency "dead end"), it gets stuck because there are no calculated probabilities to draw from. Depending on the error-handling in the code, it will either throw a KeyError/crash, prematurely halt generation, or return 'None'.
+Question 8:
+A fundamental rule of probability is that the sum of all possible outcomes must equal 1.0. If the total is 0.87, it tells you that the implementation is flawed or contains a bug. The code is "leaking" probability, likely by failing to count certain transitions, calculating the denominator incorrectly, or dropping decimals during division.
+Question 9:
+The most probable predictions are not always what a human would expect. This shows the difference between a simple probability model and human linguistic expectations. The model is entirely blind to the "meaning" or grammar of words and relies strictly on the mathematical frequencies of its limited training data. Humans rely on common sense, grammar rules, and a vast vocabulary.
+Question 10:
+Mode B (Sampling) produces significantly more variation. Mode A (Greedy) is deterministic and strictly chooses the word with the highest mathematical probability (arg max) at every step, meaning it follows the exact same path every time. Sampling uses a weighted random choice, allowing the generator to explore different branches based on the conditional distribution.
+Question 11:
+1. Graph structure: The network has two arrows pointing at the current word instead of one (X_{t-2} \rightarrow X_t \leftarrow X_{t-1}).
+2. CPT: The table becomes much larger, mapping a pair of preceding words (instead of a single word) to the next word.
+3. Context: The model has twice as much context for prediction, reducing ambiguity.
+4. Data needed: It requires significantly more training data because specific two-word combinations are rarer, leading to data sparsity issues.
+Question 12:
+Increasing context improves prediction by reducing ambiguity (e.g., knowing the previous words were "on the" heavily restricts the next word to a location). However, it makes the model harder to estimate from limited data because the Conditional Probability Table (CPT) grows exponentially. Most multi-word contexts will never appear in a small dataset, leading to many zero-probability contexts (data sparsity).
+Question 13:
+Approach B (specifying the probabilistic model) is preferable because:
+ Specifying intended behaviour gives you control over the exact mechanics.
+ Understanding the representation allows you to know how data is structured and calculated.
+ Validating the implementation is easier because you can check the code against your strict mathematical rules.
+ Testing probabilistic invariants allows you to write tests (like checking if probabilities sum to 1.0) to ensure correctness.
+ Distinguishing implementation from model clarifies that the Python code is just a tool, while the mathematical structure is the actual system.
+Question 14:
+Thinking of the language model as a Bayesian network provided:
+1. A representation of dependencies: It explicitly mapped out exactly what context (one word vs two words) the model relies on.
+2. A factorisation of the joint distribution: It used the chain rule to break down the incalculable probability of an entire sentence into manageable pieces (P(X_t\vert{}X_{t-1})).
+3. A principled method for generation: It provided a mathematically sound rulebook, turning generation into a loop of repeatedly sampling from a conditional distribution rather than arbitrary guessing.
