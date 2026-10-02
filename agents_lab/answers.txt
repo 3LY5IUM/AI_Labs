@@ -1,0 +1,29 @@
+Task 1 - Understanding the Problem
+1. The environment is a two-dimensional grid representing a warehouse, which contains obstacles ('#'), free space ('.'), a starting position ('S'), and a goal ('G')[cite: 27].
+2. The goal of the agent is to determine a collision-free path from its current position to the destination[cite: 27].
+3. The available actions are moving Up, Down, Left, and Right by one grid square[cite: 27].
+4. The agent must maintain its current state (coordinates in the grid), the location of the goal, the layout of the warehouse (to avoid obstacles), and the path/actions taken so far to reach its current position[cite: 27].
+5. This is an example of a goal-based agent because it does not simply react to its immediate percepts (e.g., stopping when it hits a wall like a reflex agent), but rather selects a sequence of actions explicitly designed to achieve a specified future state (reaching the destination)[cite: 26, 27].
+
+Think About It
+If the warehouse becomes twice as large, the state space increases significantly, which means a simple unguided search algorithm (like Breadth-First Search) might become too slow or memory-intensive[cite: 27]. A heuristic-based search strategy (like A*) would likely be required to maintain efficiency and guide the agent toward the goal.
+
+Task 2 - Designing the Agent
+* Environment: A discrete 2D grid matrix loaded from the ASCII map[cite: 27].
+* Current State: The `(x, y)` or `(row, column)` tuple representing the vehicle's position[cite: 27].
+* Goal: The `(x, y)` tuple representing the location of 'G'[cite: 27].
+* Available Actions: Transformations `(0, -1)`, `(0, 1)`, `(-1, 0)`, `(1, 0)` applied to the current state, provided the resulting coordinate is not '#'[cite: 27].
+* Decision-Making Component: A search algorithm (BFS) that maintains a queue of paths, explores valid neighboring states, and backtracks a sequence of actions once the goal state is reached[cite: 26, 27].
+* Block Diagram (Conceptual):
+  [Environment Map] --> [Percepts (Valid Moves)] --> [Decision Component (BFS Queue)] --> [Goal Test]
+                                                             |                             |
+                                                             V                             V
+                                                      [Action Selected] <---------- [Path Found]
+
+Task 3 - Prompt Engineering
+Suggested Prompt Used: "Write a well-documented Python program implementing a goal-based agent for a 2D warehouse grid. The agent starts at 'S' and must reach 'G', moving Up, Down, Left, or Right. Obstacles are '#'. Find a collision-free path using Breadth-First Search and print the path or 'No path exists'."[cite: 28]
+
+1. Did the LLM generate a working program on the first attempt? Yes, standard prompt configurations for grid search typically produce functionally correct BFS implementations on the first try[cite: 28].
+2. If not, how can you improve your prompt? If it failed, the prompt could be improved by explicitly stating how the 2D grid should be parsed from a string, specifying how boundaries should be handled, or enforcing that visited nodes must be tracked to avoid infinite loops[cite: 28].
+3. What search algorithm did the LLM choose? The LLM chose Breadth-First Search (BFS)[cite: 28].
+4. Why do you think the LLM selected this algorithm? BFS is selected because it is mathematically guaranteed to find the shortest possible path in an unweighted grid environment where every move has an identical cost[cite: 27, 28].
