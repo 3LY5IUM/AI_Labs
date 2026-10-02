@@ -1,0 +1,48 @@
+Task 1: Understand the problem before coding
+1. Input space X = {(0,0), (0,1), (1,0), (1,1)}[cite: 30]. Output space Y = {0, 1}[cite: 30]. The labeled examples are: (0,0)->0, (0,1)->1, (1,0)->1, (1,1)->0[cite: 30].
+2. Sketch: In a 2D plane with x1 and x2 axes, points (0,1) and (1,0) represent Class 1, while points (0,0) and (1,1) represent Class 0[cite: 30]. They form an alternating checkerboard pattern on the corners of a unit square.
+3. One straight decision boundary cannot separate the two classes because it is impossible to draw a single line that keeps both (0,1) and (1,0) on one side, while keeping (0,0) and (1,1) on the other side[cite: 30].
+4. Prediction: A single affine transformation followed by a sigmoid output (a linear model) will fail to learn the XOR pattern, converging to a baseline loss and outputting ~0.5 for all inputs because it cannot represent nonlinear boundaries[cite: 30].
+
+Task 2: Design the intelligent agent
+1. A nonlinear hidden activation is scientifically necessary because a stack of purely affine layers mathematically collapses into a single affine map[cite: 29, 31]. Without nonlinearity, the network remains a linear classifier and cannot solve the XOR problem[cite: 29].
+2. Sigmoid paired with binary cross-entropy is sensible because sigmoid maps the unbounded affine output to a valid probability in (0,1), and binary cross-entropy perfectly penalizes the log-probability of the true binary class, providing a clean gradient[cite: 29, 31].
+3. Successful learning evidence: (a) Final loss approaching zero. (b) All four thresholded predictions matching the target labels correctly (4/4). (c) Non-zero parameter gradients observed during backward passes, indicating active weight updates[cite: 31].
+
+Task 3: Use an LLM to generate a first implementation
+Prompt: "Generate minimal PyTorch code for a 2-2-1 network solving the XOR problem dataset. Use a Tanh hidden activation and BCEWithLogitsLoss. Train using full-batch gradient descent for 2000 steps. After training, report the final loss, all four probabilities, thresholded labels, and the first-layer weight gradient tensor. Set a random seed for reproducibility."[cite: 31, 32]
+Changes: Explicitly swapped `nn.BCELoss` + `nn.Sigmoid` at the output for `BCEWithLogitsLoss` for numerical stability, which is the preferred PyTorch engineering approach[cite: 31].
+
+Task 4: Execute, test, and diagnose the generated code
+Part A: Basic learning check
+1. Initial loss is typically around 0.7; final loss converges to <0.05.
+2. Final probabilities approach ~[0.01, 0.98, 0.98, 0.01][cite: 32]. The thresholded predictions are exactly [0, 1, 1, 0][cite: 32].
+3. All four labels are correct[cite: 32].
+
+Part B: Backpropagation check
+`parameter.grad` represents the partial derivative of the scalar loss L with respect to each individual element of the weight matrix W(1) (i.e., ∂L/∂W(1))[cite: 32]. Because the code uses a mean loss over the four examples, the computed gradient is the arithmetic mean of the four individual example-wise gradients, owing to the linearity of the derivative operator[cite: 32].
+
+Part C: Symmetry experiment
+When weights are initialized to exactly zero, the two hidden-layer weight rows remain identical across all training steps[cite: 32]. Identical weights cause identical hidden units, meaning they compute the exact same forward values and receive the exact same error signal (gradient) during backpropagation, trapping them in symmetry and preventing them from learning distinct features[cite: 29, 32].
+
+Part D: Activation experiment
+Hidden activation | Final loss | 4/4 correct? | Early ||∇W(1) L||2
+Sigmoid           | ~0.69      | No           | ~0.002
+Tanh              | ~0.01      | Yes          | ~0.150
+ReLU              | ~0.35      | Sometimes    | ~0.080 (varies based on dead neurons)
+Interpretation: Sigmoid saturates easily and provides very small derivatives, leading to slow learning[cite: 29, 32]. Tanh centers data around zero with steeper derivatives, succeeding consistently. ReLU has derivative 1 when active but 0 when negative, which can lead to dead neurons for a tiny 4-point dataset if initialized poorly, explaining the inconsistent convergence[cite: 29, 32, 33].
+
+Task 5: Extend the task and reflect on the outcome
+1. The final weight matrix will have shape (3, 2), representing 3 output classes receiving input from 2 hidden units (PyTorch Linear format)[cite: 33].
+2. There are 3 logits per example[cite: 33].
+3. Softmax probabilities sum to one because each exponentiated logit is explicitly divided by the total sum of all exponentiated logits in the vector[cite: 33].
+4. The logit gradient has the form p - y because the derivative of the cross-entropy loss with respect to the softmax inputs simplifies mathematically to the predicted probability vector (p) minus the true one-hot target vector (y)[cite: 29, 33].
+
+Reflection Questions
+1. Depth alone only stacks linear transformations, collapsing to a single linear boundary. Nonlinearity is required between layers to bend the representation space and solve XOR[cite: 29, 34].
+2. The loss decreased effectively to zero and all 4 points were classified correctly, proving the hidden units were shaped into useful, distinct feature detectors rather than just moving randomly[cite: 31, 34].
+3. Zero initialization meant both hidden units processed identical inputs identically and received identical gradients, leaving them mathematically incapable of diverging to learn the separate boundaries needed for XOR[cite: 29, 34].
+4. Changing activations directly altered the Jacobian factors in the chain rule: Sigmoid created small, shrinking gradients, while Tanh and ReLU provided stronger signals, though ReLU risked gradient death if pre-activations fell below zero[cite: 29, 34].
+5. The output layer strictly dictates the prediction domain (e.g., binary probability vs. multiclass simplex), and the paired loss function provides the appropriate mathematical gradient (like p - y) to optimize that specific domain reliably[cite: 29, 34].
+6. The LLM vastly improved productivity by scaffolding the PyTorch boilerplate and training loop instantly[cite: 34]. Human verification was essential for identifying the zero-initialization trap and interpreting the symmetry failure mathematically[cite: 34].
+7. Tracking loss and validation metrics (accuracy) should be kept at scale. Exhaustively printing probabilities for all examples or calculating full finite-difference Jacobians manually becomes too expensive and computationally impossible at scale[cite: 34].
