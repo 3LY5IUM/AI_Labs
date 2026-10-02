@@ -1,0 +1,89 @@
+Task 0: Understand the Search Problem
+* State S: The current grid coordinates of the robot (x, y)[cite: 18].
+* Actions A: Up, Down, Left, Right[cite: 17, 18].
+* Transition T: Updating the coordinates by 1 unit in the direction of the action to a free cell[cite: 17, 18].
+* Initial state s0: The coordinates where the symbol 'S' is located[cite: 18].
+* Goal G: The coordinates where the symbol 'G' is located[cite: 18].
+* Cost c: 1 for every movement[cite: 17, 18].
+
+(a) The information necessary to specify a state is the agent's current position as a coordinate pair (x, y)[cite: 18].
+(b) An action is invalid if it moves the robot into an obstacle ('#') or off the map boundaries[cite: 18].
+(c) Yes, this is a deterministic search problem because every action has exactly one predictable outcome[cite: 18].
+(d) A solution would constitute a valid sequence of actions (a path) that transitions the robot from S to G without crossing obstacles[cite: 18, 19].
+
+Task 1: Plan the Agent
+1. State representation: A tuple of integers `(row, col)`[cite: 19].
+2. Warehouse representation: A 2D list of strings parsed from the ASCII map[cite: 19, 20].
+3. Valid actions: Determined by checking adjacent tuples `(row±1, col±1)` to ensure they are within the grid dimensions and not equal to '#'[cite: 18, 19].
+4. Goal recognition: Reaching a state `(row, col)` that perfectly matches the coordinates of 'G'[cite: 18, 19].
+5. Frontier storage: A priority queue storing elements consisting of priority `f(n)`, path cost `g(n)`, current state `(row, col)`, and the sequence of actions/path taken so far[cite: 19, 20].
+6. Path reconstruction: Storing the path history within the frontier nodes, or tracking parent states in a separate dictionary[cite: 19, 20].
+
+Task 3: Test the Generated Program
+Test 1: Original warehouse
+* Whether a path was found: Yes[cite: 20].
+* The path length: 33 (Depends on exact grid structure interpretation)[cite: 20].
+* The number of states expanded: ~60 (A* avoids full grid expansion)[cite: 20].
+
+Test 2: Trivial case
+* Whether a path was found: Yes[cite: 20].
+* The path length: 1[cite: 20, 21].
+* The number of states expanded: 1[cite: 20, 21].
+
+Test 3: No solution
+* Whether a path was found: No[cite: 20].
+* The path length: N/A[cite: 20].
+* The number of states expanded: All reachable free states (exhausted frontier)[cite: 20, 21].
+
+Test 4: Alternative paths
+* The returned path is the shortest path because A* with an admissible heuristic is optimal[cite: 21].
+
+Task 4: Inspect the A* Algorithm
+* State: Represented as a `(r, c)` tuple in the `search` function[cite: 22].
+* Action: Represented by the directional offsets `[(0,1), (0,-1), (1,0), (-1,0)]`[cite: 22].
+* Transition: Adding the action offset to the current state to generate a neighbor[cite: 22].
+* Goal test: Checking `if current_state == goal_state`[cite: 22].
+* g(n): The variable tracking the number of steps taken from the start[cite: 20, 22].
+* h(n): The `manhattan_distance` function call[cite: 20, 22].
+* f(n): Implicitly calculated as `g + h` and pushed to the priority queue[cite: 20, 22].
+* Frontier: The `heapq` (priority queue) named `frontier`[cite: 20, 22].
+* Visited states: A `set` named `explored` or `visited` tracking `(r, c)` tuples[cite: 20, 22].
+* Path reconstruction: Handled by maintaining the path array inside the queue elements[cite: 20, 22].
+(a) The data structure used is a priority queue (min-heap)[cite: 20, 22].
+(b) The program selects the next state by popping the node with the lowest `f(n)` value from the heap[cite: 20, 22].
+(c) The heuristic is calculated for each valid neighbor before pushing it to the frontier[cite: 20, 22].
+(d) Yes, it computes `f = g + h` to use as the sorting key in the priority queue[cite: 20, 22].
+(e) It adds expanded states to a `visited` set and checks neighbors against this set before appending to the frontier[cite: 20, 22].
+
+Task 5: Compare A* with Blind Search
+Measure | BFS | A*
+Solution found | Yes | Yes
+Path length | 33 | 33
+States expanded | ~120 | ~60
+(a) Yes, both found a solution[cite: 23].
+(b) Yes, they found paths of the exact same length, as both are optimal for step cost 1[cite: 23].
+(c) A* expanded significantly fewer states[cite: 23].
+(d) A* uses the heuristic to estimate the remaining distance, prioritizing nodes closer to the goal and avoiding exhaustive radial expansion like BFS[cite: 23].
+
+Task 6: Investigate the Heuristic
+Explanation: Manhattan distance is appropriate because the robot is constrained to a grid and can only move horizontally and vertically (no diagonals), exactly matching the Manhattan distance metric[cite: 20, 23].
+1. If h(n) = 0: The search degrades into uniform-cost search (equivalent to BFS here), expanding states radially and vastly increasing the expanded states count[cite: 23].
+2. If h(n) = Euclidean distance: The heuristic is admissible but strictly smaller than Manhattan distance. The agent finds the optimal path but expands more states than Manhattan because the heuristic is less "informed" (underestimates the true cost more)[cite: 23].
+3. If h(n) * 2: The heuristic becomes non-admissible (overestimates the cost)[cite: 23, 24]. The search becomes greedy, expanding extremely few states but risking a suboptimal (longer) path[cite: 24].
+
+Task 7: Evaluate the LLM-Generated Agent
+1. The standard A* priority queue logic, transition formulation, and state representation were correct[cite: 24].
+2. The LLM sometimes forgets to prevent revisiting states that are already in the frontier with a higher cost, or fails to properly handle ASCII map parsing[cite: 21, 24].
+3. Discovered by running Test 3 (No Solution), which could loop indefinitely if visited states aren't tracked properly[cite: 21, 24].
+4. It might introduce `heapq` and tuple unpacking, which are Python-specific data structures[cite: 24].
+5. Yes, modified the map parsing logic to ensure consistent row/col tracking[cite: 24].
+6. Test 3 (No solution) and Test 2 (Trivial case) were excellent boundary checks to ensure the algorithm terminates and initiates correctly[cite: 21, 24].
+7. No, working output does not mean a validated algorithm[cite: 21, 24]. An agent might find a path, but not the optimal one, or might fail on edge cases.
+8. Understood how heavily the frontier expansion relies on `f(n)` calculations to physically guide the loop away from dead ends[cite: 20, 24].
+
+6 Final Reflection
+1. Formulating the problem separates understanding from implementation, ensuring that states, transition rules, and goal conditions are mathematically clear before coding begins[cite: 19, 25].
+2. A* is "informed" because it uses problem-specific knowledge (the heuristic) to estimate the distance to the goal, steering the search direction instead of blindly exploring all paths[cite: 16, 25].
+3. The heuristic dictates performance: an optimal, admissible heuristic minimizes expanded states, while a poor one degrades to blind search, and an overestimating one loses optimality[cite: 23, 24, 25].
+4. The LLM provided the Python boilerplate, data structure choices (like `heapq`), and syntax scaffolding[cite: 20, 25].
+5. An untested LLM implementation could result in infinite loops, suboptimal pathing disguised as success, or crashes on edge cases, underscoring that AI engineering requires rigorous human validation[cite: 21, 24, 25].
